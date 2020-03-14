@@ -5,7 +5,7 @@ to easily access John Hopkins CSSE data from: https://github.com/CSSEGISandData/
 
 The API automatically updates every hour, by checking for new data. It exposes several REST endpoints.
 
-###How to run:
+### How to run:
 
 - Clone this repo
 - npm install
