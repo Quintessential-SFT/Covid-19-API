@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
+    "generate:docs": "./node_modules/apidoc/bin/apidoc -i routes/ -o doc/",
     "build:docker": "docker build -t covid-api ."
   },
   "dependencies": {
