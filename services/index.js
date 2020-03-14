@@ -24,6 +24,34 @@ function dataDownload(date) {
     })
 }
 
+function liveData(region) {
+    let url;
+    if (region.province) {
+        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\') AND (Province_State=\'' + region.province + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"}]&outSR=102100&cacheHint=true';
+    } else {
+        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"}]&outSR=102100&cacheHint=true';
+    }
+
+    return new Promise((resolve, reject) => {
+        request(url, function (error, response, body) {
+            if (error || response.statusCode !== 200) {
+                return reject("Failed to download");
+            }
+            let data = JSON.parse(body);
+            if (data.error) {
+                return console.log("Failed to load data for: ", region);
+            }
+            data = data.features[0].attributes;
+            data = {
+                confirmed: data.value,
+                recovered: data.value2,
+                deaths: data.value3
+            };
+            resolve(data);
+        });
+    });
+}
+
 function initialize() {
     let date = new moment('01-22-2020', 'MM-DD-YYYY');
     let promise = new Promise((resolve => resolve()));
@@ -40,32 +68,62 @@ function initialize() {
             .catch(err => {
                 console.error("Failed to download: ", string);
             });
-
-
     }
 
     promise
+        .then(r => {
+            getLatest();
+            return "ok";
+        })
         .then(r => {
             console.log("all done")
         })
         .catch(err => {
             console.log("Something went wrong while downloading files")
         })
-
-
 }
 
 
 function getLatest() {
     let date = new moment();
-    let string = date.format('MM-DD-YYYY');
-    dataDownload(string.toString())
-        .then(r => {
-            console.log('Finished download for: ', string);
-        })
-        .catch(err => {
-            console.error("Failed to download: ", string);
-        });
+    let string = date.add(-1, 'day').format('MM-DD-YYYY');
+    let dataString = fs.readFileSync(path.resolve(__dirname, '../data/' + string + '.csv')).toString();
+    parser.parse(dataString, {
+        header: true,
+        transformHeader: function (h) {
+            return h.trim();
+        },
+        complete: (r, e) => {
+            let data = r.data;
+            let regions = data.map(r => {
+                if (r['Province/State'] && r['Province/State'].length > 1) {
+                    return {country: r['Country/Region'], province: r['Province/State']}
+                } else {
+                    return {country: r['Country/Region']}
+                }
+            });
+            let now = new moment().format('YYYY-MM-DDTHH:mm:ss');
+            let results = [];
+            let promise = new Promise(resolve => resolve());
+            regions.forEach((r, i) => {
+                promise = liveData(r)
+                    .then(p => {
+                        data[i]['Last Update'] = now;
+                        data[i]['Confirmed'] = p.confirmed;
+                        data[i]['Deaths'] = p.deaths;
+                        data[i]['Recovered'] = p.recovered;
+                    });
+            });
+            promise.then(r => {
+                let newString = parser.unparse(data, {
+                    delimiter: ",",
+                    header: true,
+                });
+                let string = new moment().format('MM-DD-YYYY');
+                fs.writeFileSync(path.resolve(__dirname, '../data/' + string + '.csv'), newString);
+            })
+        }
+    });
 
 }
 
