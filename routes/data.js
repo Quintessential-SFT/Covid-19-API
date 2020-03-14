@@ -7,8 +7,7 @@ const dataProvider = require('../services/index');
  * @apiName GetData
  * @apiGroup Data
  *
- * @apiSuccess {JsonArray} An array of objects containing: ﻿Province/State,Country/Region, Last Update, Confirmed
- * @apiSuccess {JsonArray} Deaths, Recovered, Latitude, Longitude.
+ * @apiSuccess {JsonArray} JsonArray ﻿Province/State,Country/Region, Last Update, Confirmed, Deaths, Recovered, Latitude, Longitude.
  */
 router.get('/', function (req, res, next) {
     dataProvider
@@ -29,8 +28,7 @@ router.get('/', function (req, res, next) {
  *
  * @apiParam {String} countryName The Country name
  *
- * @apiSuccess {JsonArray} An array of objects containing: ﻿Province/State,Country/Region, Last Update, Confirmed
- * @apiSuccess {JsonArray} Deaths, Recovered, Latitude, Longitude.
+ * @apiSuccess {JsonArray} JsonArray ﻿Province/State,Country/Region, Last Update, Confirmed, Deaths, Recovered, Latitude, Longitude.
  */
 router.get('/country/:countryName', function (req, res, next) {
     dataProvider
@@ -50,9 +48,9 @@ router.get('/country/:countryName', function (req, res, next) {
  *
  * @apiParam {String} date The date in a format MM-DD-YYYY
  *
- * @apiSuccess {JsonArray} An array of objects containing: ﻿Province/State,Country/Region, Last Update, Confirmed
- * @apiSuccess {JsonArray} Deaths, Recovered, Latitude, Longitude.
- */router.get('/date/:date', function (req, res, next) {
+ * @apiSuccess {JsonArray} JsonArray ﻿Province/State,Country/Region, Last Update, Confirmed, Deaths, Recovered, Latitude, Longitude.
+ */
+router.get('/date/:date', function (req, res, next) {
     dataProvider
         .getByDate(req.params.date)
         .then(r => {
@@ -68,9 +66,8 @@ router.get('/country/:countryName', function (req, res, next) {
  * @apiName GetCustomData
  * @apiGroup Data
  *
- * @apiSuccess {JsonArray} An array of objects containing: ﻿Province/State,Country/Region, Last Update, Confirmed
- * @apiSuccess {JsonArray} Deaths, Recovered, Latitude, Longitude.
- **/
+ * @apiSuccess {JsonArray} JsonArray ﻿Province/State,Country/Region, Last Update, Confirmed, Deaths, Recovered, Latitude, Longitude.
+ */
 router.get('/custom', function (req, res, next) {
     if (!(req.query.date || req.query.country)) {
         res.status(400).json({message: 'You need to send a date or country or both'});

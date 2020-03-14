@@ -18,7 +18,6 @@ const limiter = rateLimit({
     max: 100
 });
 
-app.use(limiter);
 app.use(helmet());
 
 // Import utilities
@@ -35,7 +34,7 @@ app.use(express.urlencoded({extended: false}));
 app.use(express.static(publicPath));
 
 
-app.use('/data', dataRouter);
+app.use('/data', limiter, dataRouter);
 
 process.on('SIGTERM', () => {
     clearInterval(interval);
