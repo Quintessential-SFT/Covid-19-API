@@ -2,6 +2,7 @@ const express = require('express');
 const logger = require('morgan');
 const helmet = require('helmet');
 const path = require('path');
+const cors = require('cors');
 const rateLimit = require("express-rate-limit");
 const publicPath = path.join(__dirname, '/doc');
 
@@ -18,6 +19,10 @@ const limiter = rateLimit({
     max: 100
 });
 
+app.use(cors({
+    origin: '*',
+    optionsSuccessStatus: 200
+}));
 app.use(helmet());
 
 // Import utilities
