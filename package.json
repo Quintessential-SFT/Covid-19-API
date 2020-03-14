@@ -1,0 +1,22 @@
+{
+  "name": "covid-api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "build:docker": "docker build -t covid-api ."
+  },
+  "dependencies": {
+    "apidoc": "^0.20.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "express-rate-limit": "^5.1.1",
+    "helmet": "^3.21.3",
+    "moment": "^2.24.0",
+    "morgan": "~1.9.1",
+    "node-sass-middleware": "0.11.0",
+    "papaparse": "^5.1.1",
+    "request": "^2.88.2"
+  }
+}

@@ -1,0 +1,5 @@
+./data/*.csv
+./node_modules
+
+# Project exclude paths
+/node_modules/
