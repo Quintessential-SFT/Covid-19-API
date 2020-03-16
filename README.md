@@ -7,6 +7,8 @@ Updated: This repo now also sources data from: https://www.arcgis.com/apps/opsda
 
 The API automatically updates every hour, by checking for new data. It exposes several REST endpoints.
 
+You can find a small informational website that uses the API here: https://github.com/Quintessential-SFT/COVID Note: It's in Greek
+
 ## Fight misinformation and fake news
 One of the reasons we built this API is to help developers create tools and applications that help fight the misinformation being spread around the Covid-19 virus. Send us a mail about your creation and we'll put a link on the Readme to help people get accurate data.
 
