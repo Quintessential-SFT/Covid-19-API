@@ -129,7 +129,7 @@ function getLatest() {
 
 function getDataFile(dateInput) {
     let date = new moment();
-    if (dateInput) {
+    if (dateInput && !Number.isNaN(Date.parse(dateInput))) {
         let dateTest = new moment(dateInput);
         let invalidDate = (dateTest > new moment()) || dateTest < new moment('01-22-2020', 'MM-DD-YYYY');
         if (!invalidDate) {
