@@ -173,7 +173,7 @@ function getCustom(options) {
     return getDataFile(options.date)
         .then(r => {
             if (options.country) {
-                return r.filter(r => r.country.toLowerCase() === options.country.toLowerCase())
+                return r.filter(r => r['Country/Region'].toLowerCase() === options.country.toLowerCase())
             } else {
                 return r;
             }
