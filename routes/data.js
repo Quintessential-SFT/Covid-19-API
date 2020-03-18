@@ -1,4 +1,5 @@
 const express = require('express');
+const moment = require('moment');
 const router = express.Router();
 const dataProvider = require('../services/index');
 
@@ -85,6 +86,43 @@ router.get('/custom', function (req, res, next) {
                 res.status(500).json({message: "Well that did not go well"});
             });
     }
+});
+
+/**
+ * @api {get} /data/range?countries=countries
+ * @apiName GetRangeData
+ * @apiGroup Data
+ *
+ * @apiSuccess {JsonObject[]} Result [{date: MM-DD-YYYY, cases: Number, recovered: Number, deaths: Number}]
+ */
+router.get('/range/:startDate/:endDate', function (req, res, next) {
+
+    let countries = null;
+    if (req.query.countries) {
+        countries = req.query.countries.split(',');
+        countries.forEach((r, i) => {
+            countries[i] = r.trim().toLowerCase();
+        })
+    }
+
+    let startDate = new moment(req.params.startDate, 'MM-DD-YYYY');
+    let endDate = new moment(req.params.endDate, 'MM-DD-YYYY');
+    let dateValidity = startDate.isValid() && endDate.isValid() &&
+        startDate >= new moment('01-22-2020', 'MM-DD-YYYY') && endDate <= new moment() && startDate < endDate;
+    if (!dateValidity) {
+        return res
+            .status(400)
+            .json({message: "The date format or the range were incorrect. Valid ranges are 01-22-2020 to today"})
+    }
+    dataProvider
+        .getRange(req.params.startDate, req.params.endDate, countries)
+        .then(r => {
+            res.json(r);
+        })
+        .catch(err => {
+            res.status(500).json({message: "Well that did not go well"});
+        });
+
 });
 
 module.exports = router;

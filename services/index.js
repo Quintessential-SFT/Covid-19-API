@@ -130,10 +130,10 @@ function getLatest() {
 function getDataFile(dateInput) {
     let date = new moment();
     if (dateInput) {
-        let dateTest = new moment(dateInput);
+        let dateTest = new moment(dateInput, 'MM-DD-YYYY');
         let invalidDate = !dateTest.isValid() || (dateTest > new moment()) || dateTest < new moment('01-22-2020', 'MM-DD-YYYY');
         if (!invalidDate) {
-            date = new moment(dateInput);
+            date = new moment(dateInput, 'MM-DD-YYYY');
         }
     }
     let string = date.format('MM-DD-YYYY');
@@ -180,11 +180,63 @@ function getCustom(options) {
         })
 }
 
+
+function getRange(from, to, countries) {
+
+    let date = new moment(from, 'MM-DD-YYYY');
+    let endDate = new moment(to, 'MM-DD-YYYY');
+
+    let promise = new Promise((resolve => resolve()));
+    let results = [];
+    while (date < endDate) {
+        let dateString = date.format('MM-DD-YYYY');
+        date.add(1, 'day');
+        promise = promise
+            .then(r => getDataFile(dateString))
+            .then(r => {
+                if (countries) {
+                    return r.filter(r => r['Country/Region'] && countries.indexOf(r['Country/Region'].toLowerCase()) !== -1)
+                } else {
+                    return r;
+                }
+            })
+            .then(r => {
+                let dataAggregation = {
+                    confirmed: 0,
+                    recovered: 0,
+                    deaths: 0
+                };
+                r.forEach(d => {
+                    if (d['Confirmed'] && d['Confirmed'].trim() !== '') {
+                        dataAggregation.confirmed += parseInt(d['Confirmed']);
+                    }
+
+                    if (d['Deaths'] && d['Deaths'].trim() !== '') {
+                        dataAggregation.deaths += parseInt(d['Deaths']);
+                    }
+
+                    if (d['Recovered'] && d['Recovered'].trim() !== '') {
+                        dataAggregation.recovered += parseInt(d['Recovered']);
+                    }
+                });
+                results.push({
+                    date: dateString,
+                    ...dataAggregation
+                })
+            })
+    }
+    return promise.then(r => {
+        return results;
+    })
+
+}
+
 module.exports = {
     initialize,
     getDataFile,
     getByCountry,
     getByDate,
     getCustom,
+    getRange,
     getLatest
 };
