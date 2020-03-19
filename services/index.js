@@ -160,7 +160,7 @@ function getDataFile(dateInput) {
 function getByCountry(country) {
     return getDataFile()
         .then(r => {
-            return r.filter(r => r['Country/Region'].toLowerCase() === country.toLowerCase())
+            return r.filter(r => r['Country/Region'] && r['Country/Region'].toLowerCase() === country.toLowerCase())
         })
 }
 
@@ -173,7 +173,7 @@ function getCustom(options) {
     return getDataFile(options.date)
         .then(r => {
             if (options.country) {
-                return r.filter(r => r['Country/Region'].toLowerCase() === options.country.toLowerCase())
+                return r.filter(r => r['Country/Region'] && r['Country/Region'].toLowerCase() === options.country.toLowerCase())
             } else {
                 return r;
             }
@@ -228,7 +228,24 @@ function getRange(from, to, countries) {
     return promise.then(r => {
         return results;
     })
+}
 
+
+function getAllCountries() {
+    let today = new moment().format('MM-DD-YYYY');
+    return getDataFile(today)
+        .then(r => {
+            let countries = r.map(c => {
+                if (c['Country/Region']) {
+                    return c['Country/Region'];
+                } else {
+                    return "";
+                }
+            });
+
+            // using Set to cleanup duplicates
+            return [...new Set(countries)];
+        });
 }
 
 module.exports = {
@@ -238,5 +255,6 @@ module.exports = {
     getByDate,
     getCustom,
     getRange,
-    getLatest
+    getLatest,
+    getAllCountries
 };

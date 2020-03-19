@@ -125,4 +125,24 @@ router.get('/range/:startDate/:endDate', function (req, res, next) {
 
 });
 
+
+/**
+ * @api {get} /data/meta/countries
+ * @apiName GetMetaCountryData
+ * @apiGroup Data
+ *
+ * @apiSuccess {String[]} Result ['Greece', 'Germany', 'United States'...]
+ */
+router.get('/meta/countries', function (req, res, next) {
+    dataProvider
+        .getAllCountries()
+        .then(r => {
+            res.json(r);
+        })
+        .catch(err => {
+            res.status(500).json({message: "Well that did not go well"});
+        });
+});
+
+
 module.exports = router;
