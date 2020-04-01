@@ -12,6 +12,14 @@ function dataDownload(date) {
             if (error || response.statusCode !== 200) {
                 return reject("Failed to download");
             }
+            body = body.replace('Last_Update', 'Last Update');
+            body = body.replace('Country_Region', 'Country/Region');
+            body = body.replace('Province_State', 'Province/State');
+            body = body.replace('Lat,', 'Latitude,');
+            body = body.replace('Long_,', 'Longitude,');
+            if (!fs.existsSync(path.resolve(__dirname, '../data/'))) {
+                fs.mkdirSync(path.resolve(__dirname, '../data/'));
+            }
             fs.writeFile(path.resolve(__dirname, '../data/' + date + '.csv'), body, (err) => {
                 if (err) {
                     console.error(err);
@@ -27,9 +35,9 @@ function dataDownload(date) {
 function liveData(region) {
     let url;
     if (region.province) {
-        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\') AND (Province_State=\'' + region.province + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"}]&outSR=102100&cacheHint=true';
+        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\') AND (Province_State=\'' + region.province + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"},{"statisticType":"sum","onStatisticField":"Active","outStatisticFieldName":"value4"}]&outSR=102100&cacheHint=true';
     } else {
-        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"}]&outSR=102100&cacheHint=true';
+        url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Country_Region=\'' + region.country + '\')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=[{"statisticType":"sum","onStatisticField":"Confirmed","outStatisticFieldName":"value"},{"statisticType":"sum","onStatisticField":"Recovered","outStatisticFieldName":"value2"},{"statisticType":"sum","onStatisticField":"Deaths","outStatisticFieldName":"value3"},{"statisticType":"sum","onStatisticField":"Active","outStatisticFieldName":"value4"}]&outSR=102100&cacheHint=true';
     }
 
     return new Promise((resolve, reject) => {
@@ -45,7 +53,8 @@ function liveData(region) {
             data = {
                 confirmed: data.value,
                 recovered: data.value2,
-                deaths: data.value3
+                deaths: data.value3,
+                active: data.value4
             };
             resolve(data);
         });
@@ -150,11 +159,50 @@ function getDataFile(dateInput) {
                 if (e) {
                     reject(e);
                 } else {
-                    resolve(r.data);
+                    resolve(lookupForAdmin(r.data));
                 }
             }
         })
     });
+}
+
+function lookupForAdmin(data) {
+    return data.map(r => {
+        let found = data.filter(p => p['Country/Region'] === r['Country/Region'] && p['Province/State'] === r['Province/State']);
+        return found > 1 ? mergeAdmin(found) : r;
+    });
+}
+
+function mergeAdmin(data) {
+    let original = data[0];
+    if (!original['Confirmed'] || original['Confirmed'].trim() === '') {
+        original.confirmed = 0;
+    }
+    if (!original['Deaths'] || original['Deaths'].trim() === '') {
+        original.deaths = 0;
+    }
+    if (!original['Recovered'] || original['Recovered'].trim() === '') {
+        original.recovered = 0;
+    }
+    if (!original['Active'] || original['Active'].trim() === '') {
+        original.active = 0;
+    }
+    data.splice(0, 1);
+    data.forEach(d => {
+        if (d['Confirmed'] && d['Confirmed'].trim() !== '') {
+            original.confirmed += parseInt(d['Confirmed']);
+        }
+        if (d['Deaths'] && d['Deaths'].trim() !== '') {
+            original.deaths += parseInt(d['Deaths']);
+        }
+        if (d['Recovered'] && d['Recovered'].trim() !== '') {
+            original.recovered += parseInt(d['Recovered']);
+        }
+        if (d['Active'] && d['Active'].trim() !== '') {
+            original.active += parseInt(d['Active']);
+        }
+    });
+    return original;
 }
 
 function getByCountry(country) {
@@ -204,7 +252,8 @@ function getRange(from, to, countries) {
                 let dataAggregation = {
                     confirmed: 0,
                     recovered: 0,
-                    deaths: 0
+                    deaths: 0,
+                    active: 0
                 };
                 r.forEach(d => {
                     if (d['Confirmed'] && d['Confirmed'].trim() !== '') {
@@ -217,6 +266,9 @@ function getRange(from, to, countries) {
 
                     if (d['Recovered'] && d['Recovered'].trim() !== '') {
                         dataAggregation.recovered += parseInt(d['Recovered']);
+                    }
+                    if (d['Active'] && d['Active'].trim() !== '') {
+                        dataAggregation.active += parseInt(d['Active']);
                     }
                 });
                 results.push({
